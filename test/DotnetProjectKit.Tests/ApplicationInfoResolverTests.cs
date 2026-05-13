@@ -26,7 +26,7 @@ public sealed class ApplicationInfoResolverTests : IDisposable
     [InlineData("Sample-desktop")]
     [InlineData("Sample_desktop")]
     [InlineData("Sample desktop")]
-    public void Resolve_NormalizesDesktopHostIdentity(string assemblyName)
+    public void Resolve_NormalizesDisplayAndPackageButKeepsDesktopHostStartupClass(string assemblyName)
     {
         var projectPath = WriteProject("Sample.Desktop.csproj");
         var metadata = ProjectMetadata.FromValues(new Dictionary<string, string>
@@ -42,7 +42,7 @@ public sealed class ApplicationInfoResolverTests : IDisposable
         result.IsSuccess.Should().BeTrue(result.IsFailure ? result.Error : "");
         result.Value.DisplayName.Should().Be(new ResolvedValue<string>("Sample", ApplicationInfoSource.Convention));
         result.Value.PackageName.Should().Be(new ResolvedValue<string>("Sample", ApplicationInfoSource.Convention));
-        result.Value.StartupWmClass.Should().Be(new ResolvedValue<string>("Sample", ApplicationInfoSource.Convention));
+        result.Value.StartupWmClass.Should().Be(new ResolvedValue<string>(assemblyName, ApplicationInfoSource.Convention));
     }
 
     [Fact]

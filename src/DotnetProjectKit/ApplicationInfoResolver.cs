@@ -177,10 +177,9 @@ public sealed class ApplicationInfoResolver
             return new ResolvedValue<string>(settings.StartupWmClass, ApplicationInfoSource.Config);
         }
 
-        var stripped = DesktopHostIdentity.TryStripSuffix(assemblyName);
-        return stripped is null
+        return DesktopHostIdentity.TryStripSuffix(assemblyName) is null
             ? null
-            : new ResolvedValue<string>(stripped, ApplicationInfoSource.Convention);
+            : new ResolvedValue<string>(assemblyName, ApplicationInfoSource.Convention);
     }
 
     private static ResolvedValue<string> ResolveText(
