@@ -24,4 +24,5 @@ public sealed record ApplicationInfo
     public ResolvedValue<string>? TargetFrameworks { get; init; }
     public ResolvedValue<string>? AndroidTargetFramework { get; init; }
     public ResolvedProjectAsset? Icon { get; init; }
+    public ResolvedProjectAsset? Logo { get; init; }
 }

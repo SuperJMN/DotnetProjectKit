@@ -102,7 +102,8 @@ public sealed class ApplicationInfoResolver
             TargetFramework = targetFramework,
             TargetFrameworks = targetFrameworks,
             AndroidTargetFramework = ResolveAndroidTargetFramework(targetFramework, targetFrameworks),
-            Icon = assetResolver.ResolveIcon(projectFile, metadata, logger)
+            Icon = assetResolver.ResolveIcon(projectFile, metadata, logger),
+            Logo = assetResolver.ResolveLogo(projectFile, metadata, logger)
         };
     }
 

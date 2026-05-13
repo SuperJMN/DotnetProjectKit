@@ -43,7 +43,7 @@ public sealed class ProjectMetadataReaderTests : IDisposable
 
         result.IsSuccess.Should().BeTrue(result.IsFailure ? result.Error : "");
         msbuild.Calls.Should().Be(1);
-        msbuild.RequestedProperties.Should().Contain(["AssemblyName", "Version", "Product", "PackageIcon", "ApplicationIcon"]);
+        msbuild.RequestedProperties.Should().Contain(["AssemblyName", "Version", "Product", "PackageIcon", "ApplicationIcon", "ApplicationLogo", "PackageLogo"]);
         result.Value.Get("AssemblyName").Should().Be("Sample.Desktop");
         result.Value.Get("Version").Should().Be("2.3.4");
     }

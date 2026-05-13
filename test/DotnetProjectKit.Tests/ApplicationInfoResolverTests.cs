@@ -87,6 +87,31 @@ public sealed class ApplicationInfoResolverTests : IDisposable
         result.Value.ExecutableName.Should().Be(new ResolvedValue<string>("Sample.Desktop", ApplicationInfoSource.Msbuild));
     }
 
+    [Fact]
+    public void Resolve_ExposesIconAndLogoSeparately()
+    {
+        var projectPath = WriteProject("Sample.Desktop.csproj");
+        var projectDir = Path.GetDirectoryName(projectPath)!;
+        var icon = Path.Combine(projectDir, "icon.png");
+        var logo = Path.Combine(projectDir, "logo.png");
+        File.WriteAllText(icon, "icon");
+        File.WriteAllText(logo, "logo");
+        var metadata = ProjectMetadata.FromValues(new Dictionary<string, string>
+        {
+            ["PackageIcon"] = "icon.png",
+            ["ApplicationLogo"] = "logo.png"
+        });
+        var resolver = new ApplicationInfoResolver(new StubMetadataReader(metadata));
+
+        var result = resolver.Resolve(projectPath, logger: Logger.None);
+
+        result.IsSuccess.Should().BeTrue(result.IsFailure ? result.Error : "");
+        result.Value.Icon.Should().NotBeNull();
+        result.Value.Icon!.Path.Should().Be(icon);
+        result.Value.Logo.Should().NotBeNull();
+        result.Value.Logo!.Path.Should().Be(logo);
+    }
+
     private string WriteProject(string name)
     {
         var path = Path.Combine(tempDir, name);

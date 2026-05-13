@@ -7,6 +7,18 @@ public sealed record ResolvedProjectAsset(string Path, ApplicationInfoSource Sou
 
 public sealed class ProjectAssetResolver
 {
+    private static readonly string[] IconProperties =
+    [
+        "PackageIcon",
+        "ApplicationIcon"
+    ];
+
+    private static readonly string[] LogoProperties =
+    [
+        "ApplicationLogo",
+        "PackageLogo"
+    ];
+
     private static readonly string[] IconFileNames =
     [
         "icon-512.png",
@@ -20,10 +32,29 @@ public sealed class ProjectAssetResolver
         "app.ico"
     ];
 
+    private static readonly string[] LogoFileNames =
+    [
+        "logo.png",
+        "Logo.png",
+        "logo.svg",
+        "splash.png",
+        "Splash.png",
+        "installer-logo.png",
+        "installer-logo.svg",
+        "icon-512.png",
+        "icon-256.png",
+        "icon.png",
+        "Icon.png",
+        "app.png",
+        "app.ico",
+        "icon.svg"
+    ];
+
     private static readonly string[] AssetDirectories =
     [
         "",
         "Assets",
+        "assets",
         "Resources",
         "wwwroot"
     ];
@@ -39,16 +70,40 @@ public sealed class ProjectAssetResolver
         Func<string, bool>? isSupported,
         ILogger? logger = null)
     {
-        foreach (var propertyName in new[] { "PackageIcon", "ApplicationIcon" })
+        return Resolve(projectFile, metadata, IconProperties, IconFileNames, isSupported);
+    }
+
+    public ResolvedProjectAsset? ResolveLogo(FileInfo projectFile, ProjectMetadata metadata, ILogger? logger = null)
+    {
+        return ResolveLogo(projectFile, metadata, null, logger);
+    }
+
+    public ResolvedProjectAsset? ResolveLogo(
+        FileInfo projectFile,
+        ProjectMetadata metadata,
+        Func<string, bool>? isSupported,
+        ILogger? logger = null)
+    {
+        return Resolve(projectFile, metadata, LogoProperties, LogoFileNames, isSupported);
+    }
+
+    private static ResolvedProjectAsset? Resolve(
+        FileInfo projectFile,
+        ProjectMetadata metadata,
+        IReadOnlyCollection<string> explicitProperties,
+        IReadOnlyCollection<string> conventionFileNames,
+        Func<string, bool>? isSupported)
+    {
+        foreach (var propertyName in explicitProperties)
         {
-            var explicitIcon = ResolveExplicitPath(projectFile, metadata.Get(propertyName));
-            if (explicitIcon is not null && IsSupported(explicitIcon, isSupported))
+            var explicitAsset = ResolveExplicitPath(projectFile, metadata.Get(propertyName));
+            if (explicitAsset is not null && IsSupported(explicitAsset, isSupported))
             {
-                return new ResolvedProjectAsset(explicitIcon, ApplicationInfoSource.Msbuild);
+                return new ResolvedProjectAsset(explicitAsset, ApplicationInfoSource.Msbuild);
             }
         }
 
-        return FindConventionIcon(projectFile, isSupported);
+        return FindConventionAsset(projectFile, conventionFileNames, isSupported);
     }
 
     private static string? ResolveExplicitPath(FileInfo projectFile, string? value)
@@ -74,7 +129,10 @@ public sealed class ProjectAssetResolver
         return File.Exists(projectRelativePath) ? projectRelativePath : null;
     }
 
-    private static ResolvedProjectAsset? FindConventionIcon(FileInfo projectFile, Func<string, bool>? isSupported)
+    private static ResolvedProjectAsset? FindConventionAsset(
+        FileInfo projectFile,
+        IReadOnlyCollection<string> conventionFileNames,
+        Func<string, bool>? isSupported)
     {
         var projectDirectory = projectFile.Directory?.FullName;
         if (string.IsNullOrWhiteSpace(projectDirectory))
@@ -88,21 +146,24 @@ public sealed class ProjectAssetResolver
 
         foreach (var root in roots.Distinct(StringComparer.OrdinalIgnoreCase))
         {
-            var icon = FindIconIn(root, isSupported);
-            if (icon is not null)
+            var asset = FindAssetIn(root, conventionFileNames, isSupported);
+            if (asset is not null)
             {
-                return new ResolvedProjectAsset(icon, ApplicationInfoSource.Convention);
+                return new ResolvedProjectAsset(asset, ApplicationInfoSource.Convention);
             }
         }
 
         return null;
     }
 
-    private static string? FindIconIn(string directory, Func<string, bool>? isSupported)
+    private static string? FindAssetIn(
+        string directory,
+        IReadOnlyCollection<string> conventionFileNames,
+        Func<string, bool>? isSupported)
     {
         foreach (var assetDirectory in AssetDirectories)
         {
-            foreach (var fileName in IconFileNames)
+            foreach (var fileName in conventionFileNames)
             {
                 var path = string.IsNullOrEmpty(assetDirectory)
                     ? Path.Combine(directory, fileName)

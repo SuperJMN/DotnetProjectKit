@@ -27,6 +27,8 @@ public sealed class ProjectMetadataReader : IProjectMetadataReader
         "TargetFrameworks",
         "ApplicationIcon",
         "PackageIcon",
+        "ApplicationLogo",
+        "PackageLogo",
         "IsPackable"
     ];
 
