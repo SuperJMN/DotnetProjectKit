@@ -88,6 +88,59 @@ public sealed class ApplicationInfoResolverTests : IDisposable
     }
 
     [Fact]
+    public void Resolve_UsesApplicationTitleForDisplayNameWhenAvailable()
+    {
+        var projectPath = WriteProject("Sample.Desktop.csproj");
+        var metadata = ProjectMetadata.FromValues(new Dictionary<string, string>
+        {
+            ["AssemblyName"] = "Sample.Desktop",
+            ["Product"] = "Sample.Desktop",
+            ["ApplicationTitle"] = "Sample Application",
+            ["Title"] = "Sample Product"
+        });
+        var resolver = new ApplicationInfoResolver(new StubMetadataReader(metadata));
+
+        var result = resolver.Resolve(projectPath, logger: Logger.None);
+
+        result.IsSuccess.Should().BeTrue(result.IsFailure ? result.Error : "");
+        result.Value.DisplayName.Should().Be(new ResolvedValue<string>("Sample Application", ApplicationInfoSource.Msbuild));
+    }
+
+    [Fact]
+    public void Resolve_UsesTitleForDisplayNameWhenApplicationTitleIsMissing()
+    {
+        var projectPath = WriteProject("Sample.Desktop.csproj");
+        var metadata = ProjectMetadata.FromValues(new Dictionary<string, string>
+        {
+            ["AssemblyName"] = "Sample.Desktop",
+            ["Product"] = "Sample.Desktop",
+            ["Title"] = "Sample Product"
+        });
+        var resolver = new ApplicationInfoResolver(new StubMetadataReader(metadata));
+
+        var result = resolver.Resolve(projectPath, logger: Logger.None);
+
+        result.IsSuccess.Should().BeTrue(result.IsFailure ? result.Error : "");
+        result.Value.DisplayName.Should().Be(new ResolvedValue<string>("Sample Product", ApplicationInfoSource.Msbuild));
+    }
+
+    [Fact]
+    public void Resolve_UsesPackageDescriptionWhenDescriptionIsMissing()
+    {
+        var projectPath = WriteProject("Sample.Desktop.csproj");
+        var metadata = ProjectMetadata.FromValues(new Dictionary<string, string>
+        {
+            ["PackageDescription"] = "Sample package description"
+        });
+        var resolver = new ApplicationInfoResolver(new StubMetadataReader(metadata));
+
+        var result = resolver.Resolve(projectPath, logger: Logger.None);
+
+        result.IsSuccess.Should().BeTrue(result.IsFailure ? result.Error : "");
+        result.Value.Description.Should().Be(new ResolvedValue<string>("Sample package description", ApplicationInfoSource.Msbuild));
+    }
+
+    [Fact]
     public void Resolve_ExposesIconAndLogoSeparately()
     {
         var projectPath = WriteProject("Sample.Desktop.csproj");

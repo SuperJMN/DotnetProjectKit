@@ -89,7 +89,7 @@ public sealed class ApplicationInfoResolver
             PackageName = packageName,
             Version = version,
             StartupWmClass = ResolveStartupWmClass(overrides, settings, assemblyName.Value),
-            Description = ResolveOptional(overrides.Description, settings.Description, metadata.Get("Description")),
+            Description = ResolveDescription(overrides, settings, metadata),
             Authors = ResolveOptional(overrides.Authors, settings.Authors, metadata.Get("Authors")),
             Company = ResolveOptional(overrides.Company, settings.Company, metadata.Get("Company")),
             Copyright = OptionalMsbuild(metadata, "Copyright"),
@@ -124,16 +124,28 @@ public sealed class ApplicationInfoResolver
             return new ResolvedValue<string>(settings.DisplayName, ApplicationInfoSource.Config);
         }
 
+        var applicationTitle = metadata.Get("ApplicationTitle");
+        if (!string.IsNullOrWhiteSpace(applicationTitle) && !IsImplicitSdkDisplayName(applicationTitle, assemblyName))
+        {
+            return new ResolvedValue<string>(applicationTitle, ApplicationInfoSource.Msbuild);
+        }
+
+        var title = metadata.Get("Title");
+        if (!string.IsNullOrWhiteSpace(title) && !IsImplicitSdkDisplayName(title, assemblyName))
+        {
+            return new ResolvedValue<string>(title, ApplicationInfoSource.Msbuild);
+        }
+
         var product = metadata.Get("Product");
         if (!string.IsNullOrWhiteSpace(product) && !IsImplicitSdkDisplayName(product, assemblyName))
         {
             return new ResolvedValue<string>(product, ApplicationInfoSource.Msbuild);
         }
 
-        var title = metadata.Get("AssemblyTitle");
-        if (!string.IsNullOrWhiteSpace(title) && !IsImplicitSdkDisplayName(title, assemblyName))
+        var assemblyTitle = metadata.Get("AssemblyTitle");
+        if (!string.IsNullOrWhiteSpace(assemblyTitle) && !IsImplicitSdkDisplayName(assemblyTitle, assemblyName))
         {
-            return new ResolvedValue<string>(title, ApplicationInfoSource.Msbuild);
+            return new ResolvedValue<string>(assemblyTitle, ApplicationInfoSource.Msbuild);
         }
 
         return new ResolvedValue<string>(Humanize(DesktopHostIdentity.StripSuffix(assemblyName ?? projectBaseName)), ApplicationInfoSource.Convention);
@@ -220,6 +232,22 @@ public sealed class ApplicationInfoResolver
         return !string.IsNullOrWhiteSpace(msbuildValue)
             ? new ResolvedValue<string>(msbuildValue, ApplicationInfoSource.Msbuild)
             : null;
+    }
+
+    private static ResolvedValue<string>? ResolveDescription(
+        ApplicationInfoOverrides overrides,
+        ApplicationInfoOverrides settings,
+        ProjectMetadata metadata)
+    {
+        return ResolveOptional(
+            overrides.Description,
+            settings.Description,
+            FirstNonBlank(metadata.Get("Description"), metadata.Get("PackageDescription")));
+    }
+
+    private static string? FirstNonBlank(params string?[] values)
+    {
+        return values.FirstOrDefault(value => !string.IsNullOrWhiteSpace(value));
     }
 
     private static ResolvedValue<string>? OptionalMsbuild(ProjectMetadata metadata, string propertyName)

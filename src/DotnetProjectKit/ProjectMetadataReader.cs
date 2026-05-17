@@ -11,8 +11,11 @@ public sealed class ProjectMetadataReader : IProjectMetadataReader
     public static readonly IReadOnlyCollection<string> PropertiesToRead =
     [
         "Product",
+        "ApplicationTitle",
+        "Title",
         "Company",
         "Description",
+        "PackageDescription",
         "Authors",
         "Copyright",
         "PackageLicenseExpression",
